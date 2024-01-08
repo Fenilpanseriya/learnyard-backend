@@ -10,38 +10,72 @@ import { client } from "../server.js";
 export const getAllCourse=catchAsyncEroor(
     async(req,res,next)=>{
 
-        let keyword=(req.query.keyword  || "");
+        let keyword=(req.query.keyword===null?"":req.query.keyword );
         let category=req.query.category || "";
         console.log("keyword "+keyword)
+        console.log(typeof(keyword))
         console.log("category "+category)
-        keyword=toString(keyword).toLowerCase()
-        category=toString(category).toLowerCase()
-        if(client.has("courses")){
-            const courses=await client.get(`courses ${category} ${keyword}`);
-            return res.status(200).json({
-                success:true,
-                courses
-            })
+        keyword=keyword?.toLowerCase()
+        category=category?.toLowerCase()
+        
+        // if(client.has(`courses ${category} ${keyword}`)){
+        //     console.log("in cache")
+        //     let courses1=await (client.get(`courses ${category} ${keyword}`));
+        //     let courses=JSON.parse(courses1);
+        //     console.log("all course - "+courses)
+        //     return res.status(200).json({
+        //         success:true,
+        //         courses
+        //     })
+            
+        // }
+        
+        if(true){
+            console.log("in real")
+            if(keyword){
+                let courses=  await Course.find({title:keyword}).select("-lectures");
+                client.set(`courses ${category} ${keyword}`,JSON.stringify(courses),600)
+                //console.log("all cache "+client.get(`courses ${category} ${keyword}`))
+                
+                return res.status(200).json({
+                    success:true,
+                    courses
+                })
+            }
+            if(category){
+                
+                const courses=  await Course.find({category:category}).select("-lectures");
+                console.log("###" +courses)
+                client.set(`courses ${category} ${keyword}`,JSON.stringify(courses),600)
+                //console.log("all cache "+(client.get(`courses ${category} ${keyword}`)))
+                
+                return res.status(200).json({
+                    success:true,
+                    courses
+                })
+            }
+            // const courses=await Course.find({
+            //     title:{
+            //         $regex:keyword,
+            //         $options:"i"
+            //     },
+            //     category:{
+            //         $regex:category,
+            //         $options:"i"
+            //     }
+            // }).select("-lectures");
+            else{
+                const courses=  await Course.find({}).select("-lectures");
+                client.set(`courses ${category} ${keyword}`,JSON.stringify(courses),600)
+                //console.log("all cache "+(client.get(`courses ${category} ${keyword}`)))
+                return res.status(200).json({
+                    success:true,
+                    courses
+                })
+            }
             
         }
-        else{
-            const courses=await Course.find({
-                title:{
-                    $regex:keyword,
-                    $options:"i"
-                },
-                category:{
-                    $regex:category,
-                    $options:"i"
-                }
-            }).select("-lectures");
-            client.set(`courses ${category} ${keyword}`,courses,600)
-            return res.status(200).json({
-                success:true,
-                courses
-            })
-
-        }
+        
                 
 
     }
