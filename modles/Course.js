@@ -30,6 +30,16 @@ const schema=mongoose.Schema({
                 }
         
             },
+            assignment:{
+                public_id:{
+                    type:String,
+                    
+                },
+                url:{
+                    type:String,
+                    
+                }
+            }
 
         }
     ],

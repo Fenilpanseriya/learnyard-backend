@@ -187,6 +187,25 @@ export const deleteLecture=catchAsyncEroor(async(req,res,next)=>{
 
     })
 })
+export const addAssignment=catchAsyncEroor(async(req,res,next)=>{
+    const {public_id,secure_url,courseId,lectureId}=req.body;
+    if(!public_id || !secure_url || !courseId){
+        return next(new ErrorHandler("please fill all fields"),400);
+    }
+    console.log(public_id,secure_url,courseId);
+    const course=await Course.findById(courseId);
+    if(!course){
+        return next(new ErrorHandler("course not found"),400);
+    };
+    course.lectures[lectureId].assignment.public_id=public_id;
+    course.lectures[lectureId].assignment.url=secure_url;
+    await course.save();
+    let newList=course.lectures;
+    res.status(200).json({
+        "message":"assignment added successfully",
+        "lectures":newList
+    })
+})
 Course.watch().on("change",async()=>{
     const stats=await State.find().sort({createdAt:-1}).limit(1);
     const courses=await Course.find({});
